@@ -112,12 +112,12 @@ impl VaultClient {
             info!("Importing CA certificate from {}", path);
             http_client = http_client.add_root_certificate(cert);
         }
-        
+
         // Adds client certificates
         if let Some(identity) = &settings.identity {
             http_client = http_client.identity(identity.clone());
         }
-        
+
         // Configures middleware for endpoints to append API version and token
         debug!("Using API version {}", settings.version);
         let version_str = format!("v{}", settings.version);
@@ -257,8 +257,6 @@ impl VaultClientSettingsBuilder {
     }
 
     fn default_identity(&self) -> Option<reqwest::Identity> {
-        let mut identity: Option<reqwest::Identity> = None;
-
         // Default value can be set from environment
         let env_client_cert = env::var("VAULT_CLIENT_CERT").unwrap_or_default();
         let env_client_key = env::var("VAULT_CLIENT_KEY").unwrap_or_default();
@@ -268,7 +266,7 @@ impl VaultClientSettingsBuilder {
             return None;
         }
 
-        #[cfg(feature="rustls")]
+        #[cfg(feature = "rustls")]
         {
             let mut client_cert = match fs::read(&env_client_cert) {
                 Ok(content) => content,
@@ -291,15 +289,13 @@ impl VaultClientSettingsBuilder {
 
             let pkcs8 = reqwest::Identity::from_pem(&client_cert).unwrap();
 
-            identity = Some(pkcs8);
+            Some(pkcs8)
         }
 
-        #[cfg(feature="native-tls")]
+        #[cfg(feature = "native-tls")]
         {
             panic!("Client certificates not implemented for native-tls");
         }
-
-        identity
     }
 
     fn validate(&self) -> Result<(), String> {
